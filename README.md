@@ -4,17 +4,17 @@
 
 🌟 FileList.io semi-automatic torrent uploader
 
-🌟 Tested on Python 3.12 but could work on newer & older versions of Python... kind of.
+🖥️ pip install -r requirements.txt
 
-🌟 pip install -r requirements.txt
+🖥️ Install FFMpeg and add it to PATH
 
-🌟 You need to have FFmpeg added to PATH
+🖥️ Install torrenttools v0.6.2 (MSI installer) - https://github.com/fbdtemme/torrenttools/releases  (torrenttools-0.6.2-windows-x86_64.msi)
 
-🌟 Install torrenttools v0.6.2 (MSI installer) - https://github.com/fbdtemme/torrenttools/releases  (torrenttools-0.6.2-windows-x86_64.msi)
+🖥️ Install VLC
 
-🌟 Install VLC
+🛠️ Configuration: API Keys, Paths, and Credentials in BD.py/Movie.py/TV.py
 
-🌟 Configure qBitorrent
+🛠️ Configure qBitorrent
 
 ![359194253-071c56f5-1780-40cd-9862-20b4a0b4601c](https://github.com/user-attachments/assets/e8f6c1dd-0e85-4539-a23d-ea7cc84b64da)
 
