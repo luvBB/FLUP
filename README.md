@@ -18,4 +18,6 @@
 
 ![359194253-071c56f5-1780-40cd-9862-20b4a0b4601c](https://github.com/user-attachments/assets/e8f6c1dd-0e85-4539-a23d-ea7cc84b64da)
 
-🚀 python Movie.py / python TV.py / python BD.py
+🚀 python BD.py
+  ➡️ Filme Blu-ray
+  ➡️ Filme 4k Blu-ray
