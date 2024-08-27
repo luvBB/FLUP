@@ -4,7 +4,7 @@
 
 ## 🌟 Overview
 
-FLUP is a semi-automated uploader for FileList.io, designed to streamline the process of uploading torrents for movies, TV shows, and anime.
+**FLUP is a semi-automated uploader for FileList.io, designed to streamline the process of uploading torrents for movies, TV shows, and anime.**
 
 ## 🛠️ Prerequisites
 
@@ -37,13 +37,14 @@ FLUP is a semi-automated uploader for FileList.io, designed to streamline the pr
 
 </details>
 
-
 ## ⚙️ Configuration: API Keys, Paths, and Credentials
 
 **Before using FLUP, it's essential to configure the API keys, paths, and credentials to ensure everything operates smoothly. These configurations are located at the top of each script file (`BD.py`, `Movie.py`, `TV.py`).**
 
 ## 🚀 Running the script in CMD
-**`python BD.py` or `python TV.py` or `python Movie.py`**
+`python BD.py`
+`python TV.py`
+`python Movie.py`
 
 | 🚀 python BD.py | 🚀 python TV.py | 🚀 python Movie.py |
 | ------ | ------ | --------- |
