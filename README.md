@@ -4,7 +4,7 @@
 
 ## 🌟 Overview
 
-**FLUP is a semi-automated uploader for FileList.io, designed to streamline the process of uploading torrents for movies, TV shows, and anime.**
+**FLUP is a semi-automated uploader for FileList.io, designed to streamline the process of uploading torrents for movies and TV shows in any format and category**
 
 ## 🛠️ Prerequisites
 
