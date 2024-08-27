@@ -18,8 +18,18 @@
 
 ![359194253-071c56f5-1780-40cd-9862-20b4a0b4601c](https://github.com/user-attachments/assets/e8f6c1dd-0e85-4539-a23d-ea7cc84b64da)
 
-🚀 python BD.py          🚀 python TV.py
+🚀 python BD.py                 
+➡️ Filme Blu-ray
 
-➡️ Filme Blu-ray         ➡️ Anime
+➡️ Filme 4k Blu-ray
 
-➡️ Filme 4k Blu-ray      ➡️ Desene
+🚀 python TV.py
+
+| 🚀 python BD.py | 🚀 python TV.py | 🚀 python Movie.py |
+| ------ | ------ | --------- |
+| ➡️ Filme Blu-ray | ➡️ Anime | ➡️ Anime |
+| ➡️ Filme 4k Blu-ray | ➡️ Desene | ➡️ Desene |
+| ✖️ | ➡️ Seriale 4k | ➡️ Filme 4k |
+| ✖️ | ➡️ Seriale HD | ➡️ Filme HD |
+| ✖️ | ➡️ Seriale SD | ➡️ Filme HD-RO |
+| ✖️ | ✖️ | ➡️ Filme SD |
