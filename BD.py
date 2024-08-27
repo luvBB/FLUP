@@ -261,31 +261,31 @@ def create_description_txt(summary_file, bbcode_images):
         if "QUICK SUMMARY:" in line:
             continue
         elif line.startswith("Disc Title"):
-            formatted_summary.append(f"[b][color=orange]Disc Title[/color][/b]    : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]Disc Title[/color][/b]    : {line.split(':', 1)[1].strip()}")
         elif line.startswith("Disc Label"):
-            formatted_summary.append(f"[b][color=orange]Disc Label[/color][/b]    : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]Disc Label[/color][/b]    : {line.split(':', 1)[1].strip()}")
         elif line.startswith("Disc Size"):
-            formatted_summary.append(f"[b][color=orange]Disc Size[/color][/b]     : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]Disc Size[/color][/b]     : {line.split(':', 1)[1].strip()}")
         elif line.startswith("Protection"):
-            formatted_summary.append(f"[b][color=orange]Protection[/color][/b]    : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]Protection[/color][/b]    : {line.split(':', 1)[1].strip()}")
         elif line.startswith("Playlist"):
-            formatted_summary.append(f"[b][color=orange]Playlist[/color][/b]      : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]Playlist[/color][/b]      : {line.split(':', 1)[1].strip()}")
         elif line.startswith("Size"):
-            formatted_summary.append(f"[b][color=orange]Size[/color][/b]          : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]Size[/color][/b]          : {line.split(':', 1)[1].strip()}")
         elif line.startswith("Length"):
-            formatted_summary.append(f"[b][color=orange]Length[/color][/b]        : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]Length[/color][/b]        : {line.split(':', 1)[1].strip()}")
         elif line.startswith("Total Bitrate"):
-            formatted_summary.append(f"[b][color=orange]Total Bitrate[/color][/b] : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]Total Bitrate[/color][/b] : {line.split(':', 1)[1].strip()}")
         elif line.startswith("Video"):
-            formatted_summary.append(f"[b][color=orange]Video[/color][/b]         : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]Video[/color][/b]         : {line.split(':', 1)[1].strip()}")
         elif line.startswith("Audio"):
-            formatted_summary.append(f"[b][color=orange]Audio[/color][/b]         : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]Audio[/color][/b]         : {line.split(':', 1)[1].strip()}")
         elif line.startswith("Subtitle"):
-            formatted_summary.append(f"[b][color=orange]Subtitle[/color][/b]      : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]Subtitle[/color][/b]      : {line.split(':', 1)[1].strip()}")
         elif line.startswith("* Subtitle"):
-            formatted_summary.append(f"[b][color=orange]* Subtitle[/color][/b]    : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]* Subtitle[/color][/b]    : {line.split(':', 1)[1].strip()}")
         elif line.startswith("* Audio"):
-            formatted_summary.append(f"[b][color=orange]* Audio[/color][/b]       : {line.split(':', 1)[1].strip()}")
+            formatted_summary.append(f"[b][color=#2980b9]* Audio[/color][/b]       : {line.split(':', 1)[1].strip()}")
         else:
             formatted_summary.append(line.strip())
 
