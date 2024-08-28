@@ -12,8 +12,6 @@ from bs4 import BeautifulSoup
 img4k_api_url = 'https://img4k.net/api/1/upload'
 img4k_api_key = 'img4k.net api key'
 
-local_api_url = f"https://imdb.luvbb.me/{imdb_id}"
-
 tvdb_api_key = '*'
 
 filelist_username = '*'
@@ -317,6 +315,8 @@ if imdb_id_match:
 else:
     print("Invalid IMDb link.")
     exit()
+
+local_api_url = f"https://imdb.luvbb.me/{imdb_id}"
 
 # Realizează cererea GET la URL-ul local
 response = requests.get(local_api_url)
