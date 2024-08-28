@@ -13,8 +13,7 @@ from bs4 import BeautifulSoup
 img4k_api_url = 'https://img4k.net/api/1/upload'
 img4k_api_key = 'img4k.net api key'
 
-rapidapi_key = 'rapidapi imdb api key'
-rapidapi_host = '*'
+local_api_url = f"https://imdb.luvbb.me/{imdb_id}"
 
 filelist_username = '*'
 filelist_password = '*'
@@ -310,40 +309,45 @@ create_description_txt(info, bbcode_images)
 imdb_url = input("IMDb link: ")
 
 # Extract IMDb ID from the URL
-imdb_id_match = re.search(r'tt\d+', imdb_url)
+imdb_id_match = re.search(r'(tt\d+)', imdb_url)
 if imdb_id_match:
-    imdb_id = imdb_id_match.group(0)
+    imdb_id = imdb_id_match.group(1)  # Extrage primul grup de capturare, adică ID-ul fără /
 else:
     print("Invalid IMDb link.")
     exit()
 
-# RapidAPI IMDb API to get info
-headers = {
-    'x-rapidapi-key': rapidapi_key,
-    'x-rapidapi-host': rapidapi_host
-}
+# Realizează cererea GET la URL-ul local
+response = requests.get(local_api_url)
+if response.status_code != 200:
+    print(f"Failed to fetch data from {local_api_url}. Status code: {response.status_code}")
+    exit()
 
-# Get genres
-genres_url = f"https://imdb8.p.rapidapi.com/title/v2/get-genres?tconst={imdb_id}&country=US&language=en-US"
-genres_response = requests.get(genres_url, headers=headers)
-genres_data = genres_response.json()
+# Parsează răspunsul JSON
+data = response.json()
 
+# Debugging: Afișează JSON-ul returnat pentru a verifica structura
+#print("JSON data received:", data)
+
+# Extrage genurile din JSON
 genres = []
-if genres_data and 'genres' in genres_data['data']['title']['titleGenres']:
-    genres = [genre['genre']['text'] for genre in genres_data['data']['title']['titleGenres']['genres']]
+if data and 'Genres' in data:  # Verifică existența cheii 'Genres' cu majusculă
+    genres = data['Genres']    # Extrage valoarea asociată
 
-# Limit genres to 3
+# Debugging: Afișează genurile extrase
+#print("Genres extracted:", genres)
+
+# Limitează genurile la primele 3
 top_genres = genres[:3]
 
-# Saving genres to genres.txt
+# Salvarea genurilor în genres.txt
 with open("genres.txt", "w", encoding="utf-8") as genres_file:
     genres_file.write(", ".join(top_genres))
 
-# Saving IMDb link with logo to imdb.txt
+# Salvarea link-ului IMDb în imdb.txt
 with open("imdb.txt", "w", encoding="utf-8") as imdb_file:
     imdb_file.write(f"[url=https://www.imdb.com/title/{imdb_id}/][img=https://filelist.io/styles/images/imdb.png][/url]")
 
-#("IMDb link and genres saved")
+#print("IMDb link and genres saved.")
 
 # Read the content of description.txt
 with open("description.txt", "r", encoding="utf-8") as description_file:
