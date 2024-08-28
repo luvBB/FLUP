@@ -12,7 +12,9 @@ from bs4 import BeautifulSoup
 img4k_api_url = 'https://img4k.net/api/1/upload'
 img4k_api_key = 'img4k.net api key'
 
-tvdb_api_key = '*'
+#TVDB
+api_key = '*'
+pin = '*'
 
 filelist_username = '*'
 filelist_password = '*'
@@ -311,82 +313,130 @@ imdb_url = input("IMDb link: ")
 # Extract IMDb ID from the URL
 imdb_id_match = re.search(r'(tt\d+)', imdb_url)
 if imdb_id_match:
-    imdb_id = imdb_id_match.group(1)  # Extrage primul grup de capturare, adică ID-ul fără /
+    imdb_id = imdb_id_match.group(1)  # Extract the first capturing group, the ID without '/'
 else:
     print("Invalid IMDb link.")
     exit()
 
+# Fetch data from local API
 local_api_url = f"https://imdb.luvbb.me/{imdb_id}"
-
-# Realizează cererea GET la URL-ul local
 response = requests.get(local_api_url)
 if response.status_code != 200:
     print(f"Failed to fetch data from {local_api_url}. Status code: {response.status_code}")
     exit()
 
-# Parsează răspunsul JSON
+# Parse the JSON response
 data = response.json()
 
-# Debugging: Afișează JSON-ul returnat pentru a verifica structura
-#print("JSON data received:", data)
+# Extract genres
+genres = data.get('Genres', [])
 
-# Extrage genurile din JSON
-genres = []
-if data and 'Genres' in data:  # Verifică existența cheii 'Genres' cu majusculă
-    genres = data['Genres']    # Extrage valoarea asociată
-
-# Debugging: Afișează genurile extrase
-#print("Genres extracted:", genres)
-
-# Limitează genurile la primele 3
+# Limit the genres to the top three
 top_genres = genres[:3]
 
-# Salvarea genurilor în genres.txt
+# Save the genres in genres.txt
 with open("genres.txt", "w", encoding="utf-8") as genres_file:
     genres_file.write(", ".join(top_genres))
 
-# Salvarea link-ului IMDb în imdb.txt
+# Save the IMDb link in imdb.txt
 with open("imdb.txt", "w", encoding="utf-8") as imdb_file:
     imdb_file.write(f"[url=https://www.imdb.com/title/{imdb_id}/][img=https://filelist.io/styles/images/imdb.png][/url]")
 
-#print("IMDb link and genres saved.")
+# Pasul 1: Obține un token de acces
+def get_token(api_key, pin):
+    url = "https://api4.thetvdb.com/v4/login"
+    headers = {"Content-Type": "application/json"}
+    data = {
+        "apikey": api_key,
+        "pin": pin
+    }
 
-# Authenticate with TVDB
-auth_payload = {'apikey': tvdb_api_key}
-auth_response = requests.post('https://api.thetvdb.com/login', json=auth_payload)
-auth_data = auth_response.json()
-token = auth_data.get('token')
+    response = requests.post(url, json=data, headers=headers)
+    if response.status_code == 200:
+        return response.json()["data"]["token"]
+    else:
+        raise Exception("Unable to get token: " + response.text)
 
-if not token:
-    print("Authorization error to TVBD")
-    exit()
+# Pasul 2: Preia datele despre serial folosind IMDb ID și returnează ID-ul TVDB
+def get_series_by_imdb_id(imdb_id, token):
+    url = f"https://api4.thetvdb.com/v4/search/remoteid/{imdb_id}"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}"
+    }
 
-headers = {'Authorization': f"Bearer {token}"}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        series_data = response.json()
+        if series_data['status'] == 'success' and 'data' in series_data:
+            return series_data['data'][0]['series']['id']
+        else:
+            return None  # Nu s-a găsit un serial, returnăm None
+    else:
+        return None  # Nu s-a putut face request-ul, returnăm None
 
-# Search for the series on TVDB using IMDb ID
-search_url = f"https://api.thetvdb.com/search/series?imdbId={imdb_id}"
-search_response = requests.get(search_url, headers=headers)
-search_data = search_response.json()
+# Pasul 3: Preia lista de artwork-uri pentru un serial folosind ID-ul TVDB
+def get_series_artworks(series_id, token):
+    url = f"https://api4.thetvdb.com/v4/series/{series_id}/extended"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}"
+    }
 
-banner_found = False
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json()  # Asigurăm că returnează un dicționar
+    else:
+        raise Exception("Unable to retrieve artworks: " + response.text)
 
-if 'data' in search_data and len(search_data['data']) > 0:
-    series_info = search_data['data'][0]
-    banner = series_info.get('banner', 'N/A')
-    tvdb_link = f"https://thetvdb.com/?tab=series&id={series_info['id']}"
+banner_found = False  # Initialize the banner_found variable
 
-    with open("tvdb.txt", "w", encoding="utf-8") as file:
-        file.write(f"[url={tvdb_link}][img=https://filelist.io/styles/images/tvdb.png][/url]")
+try:
+    # Obține tokenul de acces
+    token = get_token(api_key, pin)
 
-    if banner and banner != 'N/A':
-        banner_full_link = f"https://artworks.thetvdb.com/banners/{banner}"
-        with open("banner.txt", "w", encoding="utf-8") as file:
-            file.write(f"[img]{banner_full_link}[/img]")
-        banner_found = True
+    # Preia ID-ul TVDB folosind IMDb ID
+    tvdb_id = get_series_by_imdb_id(imdb_id, token)
 
-    #print("Files tvdb.txt and banner.txt created")
-else:
-    print("No TVDB information found.")
+    if tvdb_id:
+        # Afișează ID-ul TVDB
+        print(f"TVDB ID for IMDb ID {imdb_id}: {tvdb_id}")
+
+        # Preia lista de artwork-uri pentru serial folosind ID-ul TVDB
+        artworks_data = get_series_artworks(tvdb_id, token)
+
+        # Verificăm dacă există date în răspuns
+        if 'artworks' in artworks_data['data']:
+            # Caută primul banner de tip 1 (Banner)
+            for artwork in artworks_data['data']['artworks']:
+                if artwork['type'] == 1:
+                    banner_url = artwork['image']
+                    tvdb_link = f"https://thetvdb.com/?tab=series&id={tvdb_id}"
+
+                    # Formatarea textului pentru banner.txt
+                    banner_text = f"[img]{banner_url}[/img]"
+                    tvdb_text = f"[url={tvdb_link}][img=https://filelist.io/styles/images/tvdb.png][/url]"
+
+                    # Salvează rezultatele în fișierele banner.txt și tvdb.txt
+                    with open("banner.txt", "w") as banner_file:
+                        banner_file.write(banner_text)
+
+                    with open("tvdb.txt", "w") as tvdb_file:
+                        tvdb_file.write(tvdb_text)
+
+                    # Printează rezultatele
+                    print("First Banner URL:", banner_url)
+                    print("TVDB Link:", tvdb_link)
+
+                    banner_found = True  # Set banner_found to True when a banner is found
+                    break  # Oprește căutarea după ce găsești primul banner
+        else:
+            print("No artwork data available.")
+    else:
+        print(f"No TVDB ID found for IMDb ID {imdb_id}.")
+
+except Exception as e:
+    print(e)
 
 # Read the content of description.txt
 with open("description.txt", "r", encoding="utf-8") as description_file:
@@ -424,7 +474,7 @@ else:
 with open("description.txt", "w", encoding="utf-8") as description_file:
     description_file.write(new_content)
 
-#print("description.txt updated")
+print("description.txt updated")
 
 
 # Create .torrent file
@@ -659,6 +709,10 @@ if torrent_id_match:
                 form_data[edit_button['name']] = edit_button['value']
             else:
                 form_data['submit'] = edit_button['value']
+
+        # Submit the form to `takeedit.php`
+        takeedit_url = f'https://filelist.io/takeedit.php'
+        edit_response = session.post(takeedit_url, data=form_data)
 
         # Submit the form to `takeedit.php`
         takeedit_url = f'https://filelist.io/takeedit.php'
