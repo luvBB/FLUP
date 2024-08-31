@@ -205,9 +205,12 @@ def extract_info(filename):
         }
         info['Audio'].append(audio_info)
 
-    # Subtitles section
-    subtitles = re.findall(r'Language\s*:\s*(.+)', data)
-    info['Subtitles'].extend(subtitles)
+    # Subtitles section, specifically targeting Text section
+    subtitle_matches = re.findall(r'Text\n(?:ID\s*:\s*\d+\n)?(.*?)(?=\n(?:Audio|Text|Menu|$))', data, re.DOTALL)
+    for subtitle_match in subtitle_matches:
+        subtitle_language = extract_detail(r'Language\s*:\s*(.+)', subtitle_match)
+        if subtitle_language:
+            info['Subtitles'].append(subtitle_language)
 
     return info
 
