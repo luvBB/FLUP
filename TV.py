@@ -393,6 +393,8 @@ def get_series_artworks(series_id, token):
         raise Exception("Unable to retrieve artworks: " + response.text)
 
 banner_found = False  # Initialize the banner_found variable
+tvdb_content = ""
+banner_content = ""
 
 try:
     # Obține tokenul de acces
@@ -417,15 +419,8 @@ try:
                     tvdb_link = f"https://thetvdb.com/?tab=series&id={tvdb_id}"
 
                     # Formatarea textului pentru banner.txt
-                    banner_text = f"[img]{banner_url}[/img]"
-                    tvdb_text = f"[url={tvdb_link}][img=https://filelist.io/styles/images/tvdb.png][/url]"
-
-                    # Salvează rezultatele în fișierele banner.txt și tvdb.txt
-                    with open("banner.txt", "w") as banner_file:
-                        banner_file.write(banner_text)
-
-                    with open("tvdb.txt", "w") as tvdb_file:
-                        tvdb_file.write(tvdb_text)
+                    banner_content = f"[img]{banner_url}[/img]"
+                    tvdb_content = f"[url={tvdb_link}][img=https://filelist.io/styles/images/tvdb.png][/url]"
 
                     # Printează rezultatele
                     print("First Banner URL:", banner_url)
@@ -437,9 +432,9 @@ try:
             print("No artwork data available.")
     else:
         print(f"No TVDB ID found for IMDb ID {imdb_id}.")
-
 except Exception as e:
-    print(e)
+    print("Error while fetching TVDB data: ", e)
+    # Optional: Log or handle the error as needed
 
 # Read the content of description.txt
 with open("description.txt", "r", encoding="utf-8") as description_file:
@@ -449,36 +444,25 @@ with open("description.txt", "r", encoding="utf-8") as description_file:
 with open("imdb.txt", "r", encoding="utf-8") as imdb_file:
     imdb_content = imdb_file.read().strip()
 
-# Read the content of tvdb.txt
-with open("tvdb.txt", "r", encoding="utf-8") as tvdb_file:
-    tvdb_content = tvdb_file.read().strip()
-
-# Add banner content only if the banner was found
+# Add banner and TVDB content only if the banner was found
 if banner_found:
-    # Read the content of banner.txt
-    with open("banner.txt", "r", encoding="utf-8") as banner_file:
-        banner_content = banner_file.read().strip()
-
     # Find the position to insert the new content (after the [center] tag)
     insert_position = description_content.find("[center]") + len("[center]")
-
     # Create the new content
-    new_content = (description_content[:insert_position] + "" + banner_content + "\n" + "\n" +
+    new_content = (description_content[:insert_position] + banner_content + "\n\n" +
                    imdb_content + " " + tvdb_content + "\n\n" + description_content[insert_position:])
 else:
     # Find the position to insert the new content (after the [center] tag)
     insert_position = description_content.find("[center]") + len("[center]")
-
     # Create the new content without banner
-    new_content = (description_content[:insert_position] + "" + "\n" +
-                   imdb_content + " " + tvdb_content + "\n\n" + description_content[insert_position:])
+    new_content = (description_content[:insert_position] + "\n" +
+                   imdb_content + "\n\n" + description_content[insert_position:])
 
 # Updating description.txt
 with open("description.txt", "w", encoding="utf-8") as description_file:
     description_file.write(new_content)
 
 print("description.txt updated")
-
 
 # Create .torrent file
 def get_total_size(path):
