@@ -6,27 +6,10 @@ import requests
 import re
 import glob
 from bs4 import BeautifulSoup
+from config import *
 
 # ===============================
-# Configuration: API Keys, Paths, and Credentials
-# ===============================
-img4k_api_url = 'https://img4k.net/api/1/upload'
-img4k_api_key = 'img4k.net api key'
-
-filelist_username = '*'
-filelist_password = '*'
-
-qbittorrent_url = 'http://localhost:8089'
-qbittorrent_username = '*'
-qbittorrent_password = '*'
-
-bdinfo_path = r"F:\FLUP\bdinfo\BDInfo.exe"
-mediainfo_path = r"F:\FLUP\mediainfo\mediainfo.exe"
-vlc_path = r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe"
-ffmpeg_path = r"ffmpeg"
-
-# ===============================
-# Function Definitions
+# Let's Go!
 # ===============================
 
 # Function to delete specific files from the current directory.
