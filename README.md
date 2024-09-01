@@ -39,7 +39,7 @@
 
 ## ⚙️ Configuration: API Keys, Paths, and Credentials
 
-**Before using FLUP, it's essential to configure the API keys, paths, and credentials to ensure everything operates smoothly. These configurations are located at the top of each script file (`BD.py`, `Movie.py`, `TV.py`).**
+**Before using FLUP, it's essential to configure the API keys, paths, and credentials to ensure everything operates smoothly. These configurations are located in `config.py`**
 
 ## 🚀 Running the script in CMD
 `python BD.py`
