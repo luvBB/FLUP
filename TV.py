@@ -192,7 +192,7 @@ def extract_info(filename):
         r'(Text|Subtitle|PGS|ASS)\n(?:ID\s*:\s*\d+\n)?(.*?)(?=\n(?:Audio|Text|Subtitle|Menu|$)|\Z)', data, re.DOTALL)
 
     for subtitle_match in subtitle_matches:
-        subtitle_language = extract_detail(r'Language\s*:\s*(.+)', subtitle_match[1])
+        subtitle_language = extract_detail(r'Language\s*:\s*(.+)', subtitle_match[1]) or "Unknown"
         if subtitle_language:
             info['Subtitles'].append(subtitle_language)
 
@@ -264,7 +264,10 @@ def create_description_txt(info, bbcode_images):
                 if language == 'romanian':
                     description += "Language.......: [color=red]Romanian[/color]\n"
                 else:
-                    description += f"Language.......: {language.capitalize()}\n"  # Capitalizăm pentru a păstra formatul original
+                    if language == 'n/a':
+                        description += "Language.......: Unspecified\n"
+                    else:
+                        description += f"Language.......: {language.capitalize()}\n"
                 seen_languages.add(language)
 
     description = description.rstrip("\n") + "[/pre][/quote]"
