@@ -682,7 +682,6 @@ if torrent_id_match:
         # Submit the form to `takeedit.php`
         takeedit_url = f'https://filelist.io/takeedit.php'
         edit_response = session.post(takeedit_url, data=form_data)
-
         # Submit the form to `takeedit.php`
         takeedit_url = f'https://filelist.io/takeedit.php'
         edit_response = session.post(takeedit_url, data=form_data)
