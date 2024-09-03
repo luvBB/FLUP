@@ -200,8 +200,11 @@ def extract_info(filename):
 
 # Creating description.txt
 def create_description_txt(info, bbcode_images):
+    # Începe descrierea cu [center]
+    description = "[center]"
+
     # General section
-    description = "[quote][pre][u]General[/u]\n"
+    description += "[quote][pre][u]General[/u]\n"
     description += f"Container......: Matroska\n"
     if 'Duration' in info['General'] and info['General']['Duration'] != 'N/A':
         description += f"Duration.......: {info['General']['Duration']}\n"
@@ -219,7 +222,8 @@ def create_description_txt(info, bbcode_images):
         description += f"Type...........: {info['Video']['Scan type']}\n"
     if 'HDR Format' in info['Video'] and info['Video']['HDR Format'] != 'N/A':
         description += f"HDR Format.....: {info['Video']['HDR Format']}\n"
-    if 'Width' in info['Video'] and 'Height' in info['Video'] and info['Video']['Width'] != 'N/A' and info['Video']['Height'] != 'N/A':
+    if 'Width' in info['Video'] and 'Height' in info['Video'] and info['Video']['Width'] != 'N/A' and info['Video'][
+        'Height'] != 'N/A':
         width = re.sub(r'\D', '', info['Video']['Width'])
         height = re.sub(r'\D', '', info['Video']['Height'])
         description += f"Resolution.....: {width}x{height}\n"
