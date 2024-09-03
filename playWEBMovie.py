@@ -63,7 +63,7 @@ if not mkv_files:
 selected_file = random.choice(mkv_files)
 mediainfo_command = [mediainfo_path, os.path.join(file_location, selected_file)]
 mediainfo_output = subprocess.check_output(mediainfo_command, encoding='utf-8').strip()
-
+mediainfo_output = re.sub(r'Complete name\s*:\s*(.*\\)([^\\]+\.mkv)', r'Complete name                            : \2', mediainfo_output)
 with open("mediainfo.txt", "w", encoding="utf-8") as output_file:
     output_file.write(mediainfo_output)
 
@@ -176,7 +176,7 @@ def extract_info(filename):
     info['Video']['HDR Format'] = extract_detail(r'HDR format\s*:\s*(.+)', data)
 
     # Audio section
-    audio_matches = re.findall(r'Audio(?: #\d+)?\n(.*?)(?=\n(?:Audio|Text|$))', data, re.DOTALL)
+    audio_matches = re.findall(r'Audio(?: #\d+)?\n(.*?)(?=\n(?:Audio|Text|$)|\Z)', data, re.DOTALL)
     for audio_match in audio_matches:
         audio_info = {
             'Format': extract_detail(r'Format\s*:\s*(.+)', audio_match),
@@ -185,6 +185,7 @@ def extract_info(filename):
             'Channel(s)': extract_detail(r'Channel\(s\)\s*:\s*(.+)', audio_match),
             'Bit rate': extract_detail(r'Bit rate\s*:\s*(.+)', audio_match),
             'Language': extract_detail(r'Language\s*:\s*(.+)', audio_match),
+            'Title': extract_detail(r'Title\s*:\s*(.+)', audio_match)
         }
         info['Audio'].append(audio_info)
 
@@ -198,7 +199,6 @@ def extract_info(filename):
             info['Subtitles'].append(subtitle_language)
 
     return info
-
 
 # Creating description.txt
 def create_description_txt(info, bbcode_images):
@@ -221,8 +221,7 @@ def create_description_txt(info, bbcode_images):
         description += f"Type...........: {info['Video']['Scan type']}\n"
     if 'HDR Format' in info['Video'] and info['Video']['HDR Format'] != 'N/A':
         description += f"HDR Format.....: {info['Video']['HDR Format']}\n"
-    if 'Width' in info['Video'] and 'Height' in info['Video'] and info['Video']['Width'] != 'N/A' and info['Video'][
-        'Height'] != 'N/A':
+    if 'Width' in info['Video'] and 'Height' in info['Video'] and info['Video']['Width'] != 'N/A' and info['Video']['Height'] != 'N/A':
         width = re.sub(r'\D', '', info['Video']['Width'])
         height = re.sub(r'\D', '', info['Video']['Height'])
         description += f"Resolution.....: {width}x{height}\n"
@@ -233,55 +232,55 @@ def create_description_txt(info, bbcode_images):
         description += f"Frame rate.....: {info['Video']['Frame rate']}\n"
 
     # Audio section
-    for i, audio in enumerate(info['Audio']):
-        if i == 0:
-            description += "\n[u]Audio[/u]\n"
-        else:
-            description += f"\n[u]Audio #{i + 1}[/u]\n"
-        if 'Format' in audio and audio['Format'] != 'N/A':
-            description += f"Format.........: {audio['Format']}\n"
-        if 'Commercial name' in audio and audio['Commercial name'] != 'N/A':
-            description += f"Codec..........: {audio['Commercial name']}\n"
-        elif 'Codec ID' in audio and audio['Codec ID'] != 'N/A':
-            description += f"Codec..........: {audio['Codec ID']}\n"
-        if 'Channel(s)' in audio and audio['Channel(s)'] != 'N/A':
-            description += f"Channels.......: {audio['Channel(s)']}\n"
-        if 'Bit rate' in audio and audio['Bit rate'] != 'N/A':
-            bit_rate = re.sub(r'(?<=\d)\s+(?=\d)', '', audio['Bit rate'])
-            description += f"Bit rate.......: {bit_rate}\n"
-        if 'Language' in audio and audio['Language'] != 'N/A':
-            description += f"Language.......: {audio['Language']}\n"
+    if info['Audio']:  # Verifică dacă există informații audio
+        for i, audio in enumerate(info['Audio']):
+            if i == 0:
+                description += "\n[u]Audio[/u]\n"
+            else:
+                description += f"\n[u]Audio #{i + 1}[/u]\n"
+            if 'Format' in audio and audio['Format'] != 'N/A':
+                description += f"Format.........: {audio['Format']}\n"
+            if 'Commercial name' in audio and audio['Commercial name'] != 'N/A':
+                description += f"Codec..........: {audio['Commercial name']}\n"
+            elif 'Codec ID' in audio and audio['Codec ID'] != 'N/A':
+                description += f"Codec..........: {audio['Codec ID']}\n"
+            if 'Channel(s)' in audio and audio['Channel(s)'] != 'N/A':
+                description += f"Channels.......: {audio['Channel(s)']}\n"
+            if 'Bit rate' in audio and audio['Bit rate'] != 'N/A':
+                bit_rate = re.sub(r'(?<=\d)\s+(?=\d)', '', audio['Bit rate'])
+                description += f"Bit rate.......: {bit_rate}\n"
+            if 'Language' in audio and audio['Language'] != 'N/A':
+                description += f"Language.......: {audio['Language']}\n"
+            if 'Title' in audio and audio['Title'] != 'N/A':
+                description += f"Title..........: {audio['Title']}\n"
 
     # Subtitles section
-    description += "\n[u]Subtitles[/u]\n"
-    seen_languages = set()
+    if info['Subtitles']:  # Adaugă secțiunea Subtitles doar dacă există informații despre titrări
+        description += "\n[u]Subtitles[/u]\n"
+        seen_languages = set()
 
-    # Iterăm prin limbile din mediainfo și eliminăm duplicatele
-    for language in info['Subtitles']:
-        language = language.split('(')[0].strip().lower()  # Ignorăm detaliile între paranteze și normalizăm textul
-        if language not in seen_languages:
-            if language == 'romanian':
-                description += "Language.......: [color=red]Romanian[/color]\n"
-            else:
-                description += f"Language.......: {language.capitalize()}\n"  # Capitalizăm pentru a păstra formatul original
-            seen_languages.add(language)
+        # Iterăm prin limbile din mediainfo și eliminăm duplicatele
+        for language in info['Subtitles']:
+            language = language.split('(')[0].strip().lower()  # Ignorăm detaliile între paranteze și normalizăm textul
+            if language not in seen_languages:
+                if language == 'romanian':
+                    description += "Language.......: [color=red]Romanian[/color]\n"
+                else:
+                    description += f"Language.......: {language.capitalize()}\n"  # Capitalizăm pentru a păstra formatul original
+                seen_languages.add(language)
 
-    # Verificăm dacă există fișiere .srt în folder
-    srt_files_present = any(file.endswith('.srt') for file in os.listdir(file_location))
+    description = description.rstrip("\n") + "[/pre][/quote]"
 
-    # Dacă există fișiere .srt, adăugăm "Romanian" cu formatul special, doar dacă nu a fost deja adăugată
-    if srt_files_present and 'romanian' not in seen_languages:
-        description += "Language.......: [color=red]Romanian[/color]\n"
-        seen_languages.add('romanian')
+    # Add screens if available
+    if bbcode_images:
+        description += "\n[b][color=red]SCREENS:[/color][/b]\n" + bbcode_images
 
-    description = description.rstrip("\n") + "[/pre][/quote]\n"
-    description += "[b][color=red]SCREENS:[/color][/b]\n"
-    description += bbcode_images
+    description += "[/center]"
 
-    with open("description.txt", "w") as file:
-        file.write("[center]" + description + "[/center]")
+    with open("description.txt", "w", encoding="utf-8") as file:
+        file.write(description)
 
-    #print("File description.txt created")
+    print("File description.txt created")
 
 info = extract_info("mediainfo.txt")
 
