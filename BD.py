@@ -69,13 +69,12 @@ if not playlists:
     exit()
 
 first_playlist = playlists[0]
-#print(f"First playlist found: {first_playlist}")
 
 # Run BDInfo on first playlist
 command_scan = [bdinfo_path, "-m", first_playlist, input_path, report_output_dir]
 subprocess.run(command_scan, check=True)
 
-# Looking for the generated raport as text file
+# Looking for the generated report as text file
 generated_report_file = None
 for file in os.listdir(report_output_dir):
     if file.endswith(".txt"):
@@ -83,7 +82,7 @@ for file in os.listdir(report_output_dir):
         break
 
 if not generated_report_file:
-    print("Not any report found.")
+    print("No report found.")
     exit()
 
 generated_report_path = os.path.join(report_output_dir, generated_report_file)
@@ -130,73 +129,165 @@ if not largest_m2ts_file:
     print(r"Not any .m2ts file in BDMV\STREAM.")
     exit()
 
-# Use mediainfo to get the lenght of .m2ts file
-mediainfo_command = [mediainfo_path, '--Inform=Video;%Duration%', largest_m2ts_file]
-mediainfo_output = subprocess.run(mediainfo_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+# Function to extract maximum duration from M2TS files in BDInfo report
+def get_max_duration_from_m2ts(report_path):
+    with open(report_path, 'r', encoding='utf-8') as report_file:
+        lines = report_file.readlines()
 
+    max_duration = 0
+
+    for line in lines:
+        if line.strip().startswith("0") and ".M2TS" in line:
+            columns = re.split(r'\s{2,}', line.strip())
+
+            if len(columns) >= 3:
+                duration_str = columns[2]
+
+                try:
+                    hours, minutes, seconds_ms = duration_str.split(':')
+                    seconds, ms = seconds_ms.split('.')
+
+                    duration_in_seconds = int(hours) * 3600 + int(minutes) * 60 + int(seconds)
+
+                    if duration_in_seconds > max_duration:
+                        max_duration = duration_in_seconds
+                except:
+                    continue
+
+    if max_duration == 0:
+        raise ValueError("No valid duration found for M2TS files.")
+
+    return max_duration
+
+# Extract the maximum duration
 try:
-    duration_in_ms = int(mediainfo_output.stdout.strip())
-    duration_in_seconds = duration_in_ms // 1000
-except ValueError:
-    print("Can't get lenght of .m2ts file.")
-    print(mediainfo_output.stdout)
+    duration_in_seconds = get_max_duration_from_m2ts(full_report_path)
+    print(f"Maximum video file duration is {duration_in_seconds} seconds.")
+except ValueError as e:
+    print(e)
     exit()
 
-print(f"File {largest_m2ts_file} have a lenght of {duration_in_seconds} seconds.")
+# Calculate skip time as 10% of the total duration
+skip_time = int(duration_in_seconds * 0.10)
 
-skip_time = 10 * 60
-
+# Calculate valid duration range
 valid_duration_in_seconds = duration_in_seconds - 2 * skip_time
 
 if valid_duration_in_seconds <= 0:
-    raise ValueError("Video-ul este prea scurt pentru a sări primele și ultimele 10 minute.")
+    raise ValueError("Video is too short to skip the first and last 10%.")
 
+# Generate random screenshot times
 screenshot_times = sorted(random.sample(range(0, valid_duration_in_seconds), 3))
 screenshot_times = [time + skip_time for time in screenshot_times]
 
-valid_duration_in_seconds = duration_in_seconds - 2 * skip_time
-
-if valid_duration_in_seconds <= 0:
-    raise ValueError("Video-ul este prea scurt pentru a sări primele și ultimele 10 minute.")
-
-screenshot_times = sorted(random.sample(range(0, valid_duration_in_seconds), 3))
-screenshot_times = [time + skip_time for time in screenshot_times]
-
-screenshot_filenames = []
-
-for idx, time in enumerate(screenshot_times):
-    screenshot_filename = os.path.join(report_output_dir, f"screenshot_{idx+1}.png")
-    vlc_command = [
-        vlc_path,
-        '-I', 'dummy',
-        '--avcodec-hw=none',
-        largest_m2ts_file,
-        "--video-filter=scene",
-        "--vout=dummy",
-        "--no-audio",
-        "--no-sub-autodetect-file",
-        "--scene-ratio=99999",
-        f"--scene-prefix=screenshot_{idx+1}_",
-        f"--scene-path={report_output_dir}",
-        f"--start-time={time}",
-        f"--stop-time={time + 2}",
-        "vlc://quit"
+# Get video resolution using ffprobe
+def get_video_resolution(video_file):
+    ffprobe_command = [
+        'ffprobe',
+        '-v', 'error',
+        '-select_streams', 'v:0',
+        '-show_entries', 'stream=width,height',
+        '-of', 'csv=s=x:p=0',
+        video_file
     ]
-    result = subprocess.run(vlc_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    if result.returncode != 0:
-        print(f"Failed to save screenshot: {screenshot_filename}")
-        print(f"VLC Output:\n{result.stdout}")
-        print(f"VLC Error Output:\n{result.stderr}")
-    else:
+    result = subprocess.run(ffprobe_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    resolution = result.stdout.strip()
 
-        expected_screenshot_path = os.path.join(report_output_dir, f"screenshot_{idx+1}_00001.png")
-        if os.path.exists(expected_screenshot_path):
-            os.rename(expected_screenshot_path, screenshot_filename)
+    # Elimina liniile multiple și duplicatele
+    resolution_lines = resolution.splitlines()
+    if len(resolution_lines) > 1:
+        resolution = resolution_lines[0]  # Păstrăm doar prima linie
+
+    if result.returncode == 0 and resolution:
+        try:
+            width, height = map(int, resolution.replace("\n", "").split('x'))  # Elimina newline și split
+            return width, height
+        except ValueError:
+            raise ValueError(f"Invalid resolution format: {resolution}")
+    else:
+        raise ValueError("Could not get video resolution.")
+
+# VLC screenshot function
+def generate_screenshots_with_vlc(video_file, screenshot_times, report_output_dir):
+    screenshot_filenames = []
+    for idx, time in enumerate(screenshot_times):
+        screenshot_filename = os.path.join(report_output_dir, f"screenshot_{idx + 1}.png")
+        vlc_command = [
+            vlc_path,
+            '-I', 'dummy',
+            '--avcodec-hw=none',
+            video_file,
+            "--video-filter=scene",
+            "--vout=dummy",
+            "--no-audio",
+            "--no-sub-autodetect-file",
+            "--scene-ratio=99999",
+            f"--scene-prefix=screenshot_{idx + 1}_",
+            f"--scene-path={report_output_dir}",
+            f"--start-time={time}",
+            f"--stop-time={time + 2}",
+            "vlc://quit"
+        ]
+        result = subprocess.run(vlc_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode == 0:
+            expected_screenshot_path = os.path.join(report_output_dir, f"screenshot_{idx + 1}_00001.png")
+            if os.path.exists(expected_screenshot_path):
+                os.rename(expected_screenshot_path, screenshot_filename)
+                screenshot_filenames.append(screenshot_filename)
+            else:
+                print(f"Expected screenshot {expected_screenshot_path} not found.")
+        else:
+            print(f"Failed to save screenshot: {screenshot_filename}")
+    return screenshot_filenames
+
+# FFmpeg screenshot function
+def generate_screenshots_with_ffmpeg(video_file, screenshot_times, report_output_dir):
+    screenshot_filenames = []
+    for idx, time in enumerate(screenshot_times):
+        screenshot_filename = os.path.join(report_output_dir, f"screenshot_{idx + 1}.png")
+        ffmpeg_command = [
+            'ffmpeg',
+            '-ss', str(time),
+            '-i', video_file,
+            '-frames:v', '1',
+            screenshot_filename
+        ]
+        result = subprocess.run(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode == 0:
             screenshot_filenames.append(screenshot_filename)
         else:
-            print(f"Expected screenshot {expected_screenshot_path} not found.")
+            print(f"Failed to save screenshot: {screenshot_filename}")
+    return screenshot_filenames
 
-print("Screenshots saved.")
+# Main function to determine which tool to use (VLC for 2160p, FFmpeg for 1080p)
+def generate_screenshots(video_file, report_output_dir):
+    screenshot_filenames = []  # Inițializăm lista goală de capturi
+    try:
+        width, height = get_video_resolution(video_file)
+        print(f"Video resolution is {width}x{height}")
+
+        if width >= 3840 and height >= 2160:
+            print("Using VLC for screenshots...")
+            screenshot_filenames = generate_screenshots_with_vlc(video_file, screenshot_times, report_output_dir)
+        elif width >= 1920 and height >= 1080:
+            print("Using FFmpeg for screenshots...")
+            screenshot_filenames = generate_screenshots_with_ffmpeg(video_file, screenshot_times, report_output_dir)
+        else:
+            raise ValueError("Unsupported resolution for screenshots.")
+    except Exception as e:
+        print(f"Error generating screenshots: {e}")
+
+    return screenshot_filenames
+
+# Generate screenshots
+screenshot_filenames = generate_screenshots(largest_m2ts_file, report_output_dir)
+
+if screenshot_filenames:
+    print("Screenshots generated successfully:")
+    for screenshot_filename in screenshot_filenames:
+        print(screenshot_filename)
+else:
+    print("Failed to generate screenshots.")
 
 # Upload screenshots to img4k.net
 uploaded_image_urls = []
